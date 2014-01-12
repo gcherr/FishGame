@@ -1,0 +1,218 @@
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import java.awt.Color.*;
+import java.util.*;
+import java.lang.Object.*;
+import java.net.URL;
+import java.io.*;
+
+public class GameGui extends JFrame
+{
+ Image net;
+ Image background;
+ Image instruction;
+ Image oFish;
+ Image pFish;
+ private ArrayList<Fish> fishArray;
+ private River river;
+ private MenuGui menu;
+ private Net n;
+ public GameGui()
+ {
+  super("FishGame");
+  ClassLoader cldr = this.getClass().getClassLoader();
+
+     try {
+   URL bgURL   = cldr.getResource("background.gif");
+   ImageIcon bg1 = new ImageIcon(bgURL);
+   background = bg1.getImage();
+
+   URL instURL   = cldr.getResource("instructions.gif");
+   ImageIcon inst1 = new ImageIcon(instURL);
+   instruction = inst1.getImage();
+
+   URL netURL   = cldr.getResource("net.gif");
+   ImageIcon net1 = new ImageIcon(netURL);
+   net = net1.getImage();
+
+   URL oFishURL   = cldr.getResource("oFish.gif");
+   ImageIcon oFish1 = new ImageIcon(oFishURL);
+   oFish = oFish1.getImage();
+
+   URL pURL   = cldr.getResource("pFish.gif");
+   ImageIcon p1 = new ImageIcon(pURL);
+   pFish = p1.getImage();
+    }
+      catch (Exception e){
+   try{
+    PrintStream p = new PrintStream(
+       new FileOutputStream(new File("trace2.txt")));
+    p.println("got here"); // sample output to file
+    e.printStackTrace(p); // print stack trace to output file
+   }
+   catch(Exception e1) // need this empty section for PrintStream
+   {
+   }
+     }
+
+  n=new Net(600,725);
+  addKeyListener( new KeyHandler());
+        addMouseListener( new MouseClickHandler() );
+        addWindowListener(new java.awt.event.WindowAdapter()
+        {
+            public void windowClosing(WindowEvent evt)
+            {
+                System.exit(0);
+            }
+        });
+        setSize( 1200,900);
+        setVisible(true);
+        river=new River(this);
+        river.generateFish();
+
+   }
+
+    public void paint(Graphics g)
+ {
+
+  Image offImage = createImage(1200,900);
+  Graphics buffer = offImage.getGraphics();
+  paintOffScreen(buffer);
+  g.drawImage(offImage, 0, 0, null);
+
+ }
+ public void updateFishArray(ArrayList<Fish> fA)
+ {
+  fishArray=fA;
+ }
+ public void paintOffScreen(Graphics g)
+ {
+     if(n.getXpos()>950)
+     {
+      n.setXpos(950);
+     }
+     if(n.getXpos()<120)
+     {
+      n.setXpos(120);
+     }
+
+     super.paint(g);
+     g.drawImage(background, 0, 0, 1200, 1000, Color.BLACK, this);
+     g.drawImage(net,n.getXpos(),725, 200, 200, this);
+     g.drawString("Caught: " + river.getNumCaught(), 1075, 100);
+     g.drawString("Missed: " + river.getNumMissed(), 1075, 120);
+
+     for(Fish f:fishArray)
+     {
+      if(f.isPoison())
+      {
+       int nY = n.getYpos();
+          int nX = n.getXpos();
+          int fY = f.getYpos();
+          int fX = f.getXpos();
+
+          if (nY - 50<=fY && nY + 10>=fY)
+          {
+           if (((nX - 30)<=fX) && ((nX + 80)>=fX))
+           {
+            GameResult over = new GameResult(false);
+         dispose();
+           }
+          }
+       g.drawImage(pFish, f.getXpos(), f.getYpos(), this);
+      }
+      else
+      {
+       int nY = n.getYpos();
+          int nX = n.getXpos();
+          int fY = f.getYpos();
+          int fX = f.getXpos();
+
+          if (nY - 20<=fY && nY + 10>=fY)
+          {
+           if (((nX - 30)<=fX) && ((nX + 80)>=fX))
+           {
+            river.addCaught(f);
+            if (river.getNumCaught() == 50)
+         {
+          GameResult over = new GameResult(true);
+          dispose();
+         }
+            updateFishArray(fishArray);
+            repaint();
+           }
+          }
+       updateFishArray(fishArray);
+       if (f.getYpos() == 900)
+       {
+        river.addMissed(f);
+        if (river.getNumMissed() == 5)
+        {
+         GameResult over = new GameResult(false);
+         dispose();
+        }
+        updateFishArray(fishArray);
+           g.drawString("Caught: " + river.getNumCaught(), 100, 840);
+           g.drawString("Missed: " + river.getNumMissed(), 100, 860);
+           repaint();
+       }
+       g.drawImage(oFish, f.getXpos(), f.getYpos(), this);
+      }
+     }
+     repaint();
+    }
+
+    public static void main(String[] args)
+    {
+        GameGui start = new GameGui();
+    }
+
+    private class KeyHandler implements KeyListener
+    {
+        public void keyPressed ( KeyEvent event )
+        {
+         if (event.getKeyCode() == KeyEvent.VK_LEFT)
+            {
+             river.moveNetLeft(n);
+             repaint();
+            }
+
+            if(event.getKeyCode()== KeyEvent.VK_RIGHT)
+            {
+    river.moveNetRight(n);
+             repaint();
+            }
+            if(event.getKeyCode()== KeyEvent.VK_ESCAPE)
+            {
+             dispose();
+            }
+
+        }
+
+        public void keyReleased (KeyEvent event )
+        {
+
+        }
+
+        public void keyTyped (KeyEvent event )
+        {
+
+        }
+
+    }
+
+    private class MouseClickHandler extends MouseAdapter implements
+    MouseMotionListener, MouseListener, MouseWheelListener
+    {
+
+        public void mouseClicked ( MouseEvent event )
+        {
+
+        }
+
+    }
+
+
+}
+
